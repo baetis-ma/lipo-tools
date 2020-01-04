@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+    body {background-color: salmon;}
+    h1  { text-align:center; color:Black; }
+    #myBat  { position:absolute;top:20%;left:7%;height:65%; width:82%; }
+    #chargef { position:absolute;top:90%;left:10%; }
+    #dischgf { position:absolute;top:90%;left:25%; }
+    #dischg28f { position:absolute;top:90%;left:43%; }
+    #currentf { position:absolute;top:90%;left:65%; }
+    #volt1 { position:absolute;top:7%;left:5%; }
+    #volt2 { position:absolute;top:10%;left:5%; }
+    #volt3 { position:absolute;top:13%;left:5%; }
+    #relay1 { position:absolute;top:73%;left:90%; }
+    #relay2 { position:absolute;top:76%;left:90%; }
+    #relay3 { position:absolute;top:79%;left:90%; }
+    #relay4 { position:absolute;top:82%;left:90%; }
+    #powertot { position:absolute;top:10%;left:80%; }
+    input { font-size:xx-small;}
+</style>
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <h1>LiPo Battery Charger and Tester</h1>
+    <form id ="currentf">Battery Current <input id = "current" type="text" size="4"> Amps</form>
+    <form id="chargef">Charging <input type="button" id='charge' value="DISABLED"></form>
+    <form id="dischgf">Discharging <input type="button" id='dischg' value="DISABLED"></form>
+    <form id="dischg28f">Discharge to 2.8V/cell <input type="button" id='dischg28' value="DISABLED"></form>
+    <div id="myBat" > </div>
+    <p id = "volt1">
+    <p id = "volt2">
+    <p id = "volt3">
+    <p id = "powertot">
+    <p id = "relay1">
+    <p id = "relay2">
+    <p id = "relay3">
+    <p id = "relay4">
+
+    <script>
+      setInterval(function(){ getData(); } , 1000);
+
+      document.getElementById('dischg').onclick = function() {
+          if(document.getElementById("dischg").value === "DISABLED"){
+             document.getElementById("dischg").value = "ENABLED";  
+             databatv1 = []; databatv2 = []; databatv3 = [];
+             trace1.x = []; trace2.x = []; trace3.x = [];
+             trace1.y = []; trace2.y = []; trace3.y = [];
+             samplecnt = 0;
+             document.getElementById("dischg28").value = "DISABLED"; 
+             document.getElementById("charge").value = "DISABLED"; }
+          else { 
+             document.getElementById("dischg").value = "DISABLED"; }
+      }
+
+      document.getElementById('charge').onclick = function() {
+          if(document.getElementById("charge").value === "DISABLED"){
+             document.getElementById("charge").value = "ENABLED";  
+             databatv1 = []; databatv2 = []; databatv3 = [];
+             trace1.x = []; trace2.x = []; trace3.x = [];
+             trace1.y = []; trace2.y = []; trace3.y = [];
+             samplecnt = 0;
+             document.getElementById("dischg28").value = "DISABLED"; 
+             document.getElementById("dischg").value = "DISABLED"; }
+          else { 
+             document.getElementById("charge").value = "DISABLED"; }
+      }
+
+      document.getElementById('dischg28').onclick = function() {
+          if(document.getElementById("dischg28").value === "DISABLED"){
+             document.getElementById("dischg28").value = "ENABLED";  
+             databatv1 = []; databatv2 = []; databatv3 = [];
+             trace1.x = []; trace2.x = []; trace3.x = [];
+             trace1.y = []; trace2.y = []; trace3.y = [];
+             samplecnt = 0;
+             document.getElementById("dischg").value = "DISABLED"; 
+             document.getElementById("charge").value = "DISABLED"; }
+          else { 
+             document.getElementById("dischg28").value = "DISABLED"; }
+      }
+
+      function getData() {
+//         console.log("print ",document.getElementById("charge").value+
+//                       "    "+document.getElementById("dischg").value
+//		 );
+
+         var tempstr = "charge="+document.getElementById("charge").value+
+                       "dischg="+document.getElementById("dischg").value;
+
+         current = document.getElementById("current").value;
+	 databatv1[samplecnt] = 3.2;
+	 databatv2[samplecnt] = 3.1;
+	 databatv3[samplecnt] = 3.0;
+         //put the plotting data into plotly trace arrays
+         trace1.x[samplecnt] = String(samplecnt);
+         trace2.x[samplecnt] = String(samplecnt);
+         trace3.x[samplecnt] = String(samplecnt);
+         trace1.y[samplecnt] = String(databatv1[samplecnt]);
+         trace2.y[samplecnt] = String(databatv2[samplecnt]);
+         trace3.y[samplecnt] = String(databatv3[samplecnt]);
+//console.log("print ",samplecnt);
+
+         //interface to html exery plot update
+         Plotly.newPlot('myBat', databatv, layout,{responsive: true});
+
+         document.getElementById("volt1").innerHTML = "battery 1 = "+databatv1[samplecnt].toFixed(2)+"V";
+         document.getElementById("volt2").innerHTML = "battery 2 = "+databatv2[samplecnt].toFixed(2)+"V";
+         document.getElementById("volt3").innerHTML = "battery 3 = "+databatv3[samplecnt].toFixed(2)+"V";
+	 samplecnt = samplecnt + 1;
+         powertot = powertot + current / 3600;
+         document.getElementById("powertot").innerHTML = "Battery Charge = "+powertot.toFixed(3)+" AH";
+         document.getElementById("relay1").innerHTML = "Relay1 OFF";
+         document.getElementById("relay2").innerHTML = "Relay2 OFF";
+         document.getElementById("relay3").innerHTML = "Relay3 OFF";
+         document.getElementById("relay4").innerHTML = "Relay4 OFF";
+
+//
+//       var xhr = new XMLHttpRequest();
+//       xhr.open("GET", "getData?"+tempstr, true);
+//       xhr.setRequestHeader("Content-Type", "application/bin");
+//       xhr.send(tempstr);
+
+//       xhr.onreadystatechange = function() {
+//          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+//             var DataRet = this.responseText;
+//             var DataRetArray = DataRet.split(",");
+//             var lasttraceptr;
+//             console.log("Start "+DataRetArray[0]);
+//             //console.log("DataRet "+DataRetArray);
+//             lasttraceptr = traceptr;
+//             var indexx;
+//
+//             var cntsamples= DataRetArray[0];
+//             if(cntsamples >=1){
+//             for(x=0;x<cntsamples-1;x++) {
+//                 tdata[traceptr]    = parseInt(DataRetArray[7*x+1],10);
+//                 data[traceptr] = parseInt(DataRetArray[7*x+2],10);
+//                 data[traceptr] = parseInt(DataRetArray[7*x+3],10);
+//                 data[traceptr] = parseInt(DataRetArray[7*x+4],10);
+//                 traceptr++;
+//             }}
+//
+//             //keep the plotting data sample at samples length
+//             var maxsamples = 400;
+//             if (tdata.length > maxsamples) {
+//                 tdata.splice( 0, tdata.length-maxsamples);
+//                 data.splice( 0, aclxdata.length-maxsamples);
+//                 data.splice( 0, aclydata.length-maxsamples);
+//                 data.splice( 0, aclzdata.length-maxsamples);
+//                 traceptr = maxsamples ;
+//             }
+//
+//             //put the plotting data into plotly trace arrays
+//             for(x=0; x<tdata.length; x++){
+//                 trace1.x[x] = String(tdata[x]);
+//                 trace2.x[x] = String(tdata[x]);
+//                 trace3.x[x] = String(tdata[x]);
+//                 trace1.y[x] = String(databatv1[x]);
+//                 trace2.y[x] = String(databatv1[x]);
+//                 trace3.y[x] = String(databatv1[x]);
+//             }
+//
+//             //interface to html exery plot update
+//             Plotly.newPlot('myBat', databatv, layout,{responsive: true});
+//          }
+//       }
+      }
+
+      var x;
+      var samplecnt = 0;
+      var powertot = 0;
+      var current = 0;
+      var tdata = [0];
+      var databatv1 = [0];
+      var databatv2 = [0];
+      var databatv3 = [0];
+      var relay1 = 1; //battery1 shorted
+      var relay2 = 1; //battery2 shorted
+      var relay3 = 1; //battery3 shorted
+      var relay4 = 1; //charging on
+      var traceptr = 0;
+      var regsubmit = 0;
+      var DataRet;
+      var trace1 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(255,0,0)', size: 2 },
+                 marker: {color:'rgb(255,0,0)', size: 3 } };
+      var trace2 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(40,40,40)', size: 2 },
+                 marker: {color:'rgb(40,40,40)', size: 3 } };
+      var trace3 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(0,255,0)', size: 2 },
+                 marker: {color:'rgb(0,255,0)', size: 3 } };
+
+      layout= {
+            title: { text:'Battery Cell Voltages', font: { size: 24, color: '#ffffff' } },
+            showlegend : false,
+            autosize : true,
+            margin:{ l:30, r:20, b:40, t:40, pad:4},
+            plot_bgcolor:"#aaaf",
+            paper_bgcolor:"#a00f",
+            yaxis: { range: [0, 4] },
+            xaxis: { title: { text: 'Time (sec)', font: { size: 18, color: '#ffffff' } },
+                     tickfont: { size:16, color:'white'} 
+            }
+      }
+
+      var databatv = [trace1,trace2,trace3];
+
+    </script>
+</body>
+</html>
+
+
+
+
