@@ -7,7 +7,7 @@
     #myBat  { position:absolute;top:20%;left:7%;height:65%; width:82%; }
     #chargef { position:absolute;top:90%;left:10%; }
     #dischgf { position:absolute;top:90%;left:25%; }
-    #dischg28f { position:absolute;top:90%;left:43%; }
+    #dischg38f { position:absolute;top:90%;left:43%; }
     #currentf { position:absolute;top:90%;left:65%; }
     #volt1 { position:absolute;top:7%;left:5%; }
     #volt2 { position:absolute;top:10%;left:5%; }
@@ -28,7 +28,7 @@
     <form id ="currentf">Battery Current <input id = "current" type="text" size="4"> Amps</form>
     <form id="chargef">Charging <input type="button" id='charge' value="DISABLED"></form>
     <form id="dischgf">Discharging <input type="button" id='dischg' value="DISABLED"></form>
-    <form id="dischg28f">Discharge to 2.8V/cell <input type="button" id='dischg28' value="DISABLED"></form>
+    <form id="dischg38f">Discharge to 3.8V/cell <input type="button" id='dischg38' value="DISABLED"></form>
     <div id="myBat" > </div>
     <p id = "volt1">
     <p id = "volt2">
@@ -49,7 +49,7 @@
              trace1.x = []; trace2.x = []; trace3.x = [];
              trace1.y = []; trace2.y = []; trace3.y = [];
              samplecnt = 0;
-             document.getElementById("dischg28").value = "DISABLED"; 
+             document.getElementById("dischg38").value = "DISABLED"; 
              document.getElementById("charge").value = "DISABLED"; }
           else { 
              document.getElementById("dischg").value = "DISABLED"; }
@@ -62,15 +62,15 @@
              trace1.x = []; trace2.x = []; trace3.x = [];
              trace1.y = []; trace2.y = []; trace3.y = [];
              samplecnt = 0;
-             document.getElementById("dischg28").value = "DISABLED"; 
+             document.getElementById("dischg38").value = "DISABLED"; 
              document.getElementById("dischg").value = "DISABLED"; }
           else { 
              document.getElementById("charge").value = "DISABLED"; }
       }
 
-      document.getElementById('dischg28').onclick = function() {
-          if(document.getElementById("dischg28").value === "DISABLED"){
-             document.getElementById("dischg28").value = "ENABLED";  
+      document.getElementById('dischg38').onclick = function() {
+          if(document.getElementById("dischg38").value === "DISABLED"){
+             document.getElementById("dischg38").value = "ENABLED";  
              databatv1 = []; databatv2 = []; databatv3 = [];
              trace1.x = []; trace2.x = []; trace3.x = [];
              trace1.y = []; trace2.y = []; trace3.y = [];
@@ -78,7 +78,7 @@
              document.getElementById("dischg").value = "DISABLED"; 
              document.getElementById("charge").value = "DISABLED"; }
           else { 
-             document.getElementById("dischg28").value = "DISABLED"; }
+             document.getElementById("dischg38").value = "DISABLED"; }
       }
 
       function getData() {
