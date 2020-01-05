@@ -12,10 +12,14 @@
     #volt1 { position:absolute;top:7%;left:5%; }
     #volt2 { position:absolute;top:10%;left:5%; }
     #volt3 { position:absolute;top:13%;left:5%; }
-    #relay1 { position:absolute;top:73%;left:90%; }
-    #relay2 { position:absolute;top:76%;left:90%; }
-    #relay3 { position:absolute;top:79%;left:90%; }
-    #relay4 { position:absolute;top:82%;left:90%; }
+    #chrg1 { position:absolute;top:48%;left:90%; }
+    #chrg2 { position:absolute;top:51%;left:90%; }
+    #disc1 { position:absolute;top:58%;left:90%; }
+    #disc2 { position:absolute;top:61%;left:90%; }
+    #relay1 { position:absolute;top:70%;left:90%; }
+    #relay2 { position:absolute;top:73%;left:90%; }
+    #relay3 { position:absolute;top:76%;left:90%; }
+    #relay4 { position:absolute;top:79%;left:90%; }
     #powertot { position:absolute;top:10%;left:80%; }
     input { font-size:xx-small;}
 </style>
@@ -25,7 +29,7 @@
 
 <body>
     <h1>LiPo Battery Charger and Tester</h1>
-    <form id ="currentf">Battery Current <input id = "current" type="text" size="4"> Amps</form>
+    <form id ="currentf">Battery Current <input id = "current" type="text" size="4" value="0.00"> Amps</form>
     <form id="chargef">Charging <input type="button" id='charge' value="DISABLED"></form>
     <form id="dischgf">Discharging <input type="button" id='dischg' value="DISABLED"></form>
     <form id="dischg38f">Discharge to 3.8V/cell <input type="button" id='dischg38' value="DISABLED"></form>
@@ -34,13 +38,17 @@
     <p id = "volt2">
     <p id = "volt3">
     <p id = "powertot">
+    <p id = "chrg1">
+    <p id = "chrg2">
+    <p id = "disc1">
+    <p id = "disc2">
     <p id = "relay1">
     <p id = "relay2">
     <p id = "relay3">
     <p id = "relay4">
 
     <script>
-      setInterval(function(){ getData(); } , 1000);
+      setInterval(function(){ getData(); } , 2000);
 
       document.getElementById('dischg').onclick = function() {
           if(document.getElementById("dischg").value === "DISABLED"){
@@ -82,17 +90,10 @@
       }
 
       function getData() {
-//         console.log("print ",document.getElementById("charge").value+
-//                       "    "+document.getElementById("dischg").value
-//		 );
-
-         var tempstr = "charge="+document.getElementById("charge").value+
-                       "dischg="+document.getElementById("dischg").value;
-
-         current = document.getElementById("current").value;
-	 databatv1[samplecnt] = 3.2;
-	 databatv2[samplecnt] = 3.1;
-	 databatv3[samplecnt] = 3.0;
+         //update plot
+	     databatv1[samplecnt] = 4.2;
+	     databatv2[samplecnt] = 4.1;
+	     databatv3[samplecnt] = 4.0;
          //put the plotting data into plotly trace arrays
          trace1.x[samplecnt] = String(samplecnt);
          trace2.x[samplecnt] = String(samplecnt);
@@ -100,29 +101,48 @@
          trace1.y[samplecnt] = String(databatv1[samplecnt]);
          trace2.y[samplecnt] = String(databatv2[samplecnt]);
          trace3.y[samplecnt] = String(databatv3[samplecnt]);
-//console.log("print ",samplecnt);
-
-         //interface to html exery plot update
          Plotly.newPlot('myBat', databatv, layout,{responsive: true});
 
+         //write to rest of webpage
          document.getElementById("volt1").innerHTML = "battery 1 = "+databatv1[samplecnt].toFixed(2)+"V";
          document.getElementById("volt2").innerHTML = "battery 2 = "+databatv2[samplecnt].toFixed(2)+"V";
          document.getElementById("volt3").innerHTML = "battery 3 = "+databatv3[samplecnt].toFixed(2)+"V";
-	 samplecnt = samplecnt + 1;
-         powertot = powertot + current / 3600;
+	     samplecnt = samplecnt + 1;
          document.getElementById("powertot").innerHTML = "Battery Charge = "+powertot.toFixed(3)+" AH";
+         document.getElementById("chrg1").innerHTML = "Charging";
+         if (document.getElementById('charge').value == "ENABLED")
+                document.getElementById("chrg2").innerHTML = " At "+current.toString(10)+" Amps";
+                   else
+                document.getElementById("chrg2").innerHTML = " OFF";
+         document.getElementById("disc1").innerHTML = "Discharge";
+         if (document.getElementById('dischg').value == "ENABLED")
+                document.getElementById("disc2").innerHTML = " 3 Ohm to GND"; else
+                document.getElementById("disc2").innerHTML = " OFF";
          document.getElementById("relay1").innerHTML = "Relay1 OFF";
          document.getElementById("relay2").innerHTML = "Relay2 OFF";
          document.getElementById("relay3").innerHTML = "Relay3 OFF";
          document.getElementById("relay4").innerHTML = "Relay4 OFF";
 
-//
-//       var xhr = new XMLHttpRequest();
-//       xhr.open("GET", "getData?"+tempstr, true);
-//       xhr.setRequestHeader("Content-Type", "application/bin");
-//       xhr.send(tempstr);
+         //post http responce
+         current = document.getElementById("current").value;
+         if ( document.getElementById("charge").value == "ENABLED") charge = 1;
+                                                               else charge = 0;
+         if ( document.getElementById("dischg").value == "ENABLED") dischg = 1;
+                                                               else dischg = 0;
+         if ( document.getElementById("dischg38").value == "ENABLED") dischg38 = 1;
+                                                               else dischg38 = 0;
 
-//       xhr.onreadystatechange = function() {
+         var tempstr = "charge="+charge+",dischg="+dischg+",dischg38="+dischg38+
+                       ",current="+document.getElementById("current").value;
+         var xhr = new XMLHttpRequest();
+         xhr.open("GET", "getData?"+tempstr, true);
+         xhr.setRequestHeader("Content-Type", "application/bin");
+         xhr.send(tempstr);
+
+         powertot = powertot + current / 3600;
+
+         //when responce occurs parst then new data from esp
+         xhr.onreadystatechange = function() {
 //          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
 //             var DataRet = this.responseText;
 //             var DataRetArray = DataRet.split(",");
@@ -165,20 +185,23 @@
 //             //interface to html exery plot update
 //             Plotly.newPlot('myBat', databatv, layout,{responsive: true});
 //          }
-//       }
+       }
       }
 
       var x;
       var samplecnt = 0;
       var powertot = 0;
-      var current = 0;
+      var current;
+      var charge;
+      var dischg;
+      var dischg38;
       var tdata = [0];
       var databatv1 = [0];
       var databatv2 = [0];
       var databatv3 = [0];
-      var relay1 = 1; //battery1 shorted
-      var relay2 = 1; //battery2 shorted
-      var relay3 = 1; //battery3 shorted
+      var relay1 = 1; 
+      var relay2 = 1; 
+      var relay3 = 1; 
       var relay4 = 1; //charging on
       var traceptr = 0;
       var regsubmit = 0;
@@ -200,7 +223,7 @@
             margin:{ l:30, r:20, b:40, t:40, pad:4},
             plot_bgcolor:"#aaaf",
             paper_bgcolor:"#a00f",
-            yaxis: { range: [0, 4] },
+            yaxis: { range: [0, 5] },
             xaxis: { title: { text: 'Time (sec)', font: { size: 18, color: '#ffffff' } },
                      tickfont: { size:16, color:'white'} 
             }

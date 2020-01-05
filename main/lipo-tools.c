@@ -1,10 +1,6 @@
 #include <string.h>
 #include <stdio.h>
-
-#include "math.h"
-#include "complex.h"
-
-//#include <sys/param.h>
+#include <stdlib.h>
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_event_loop.h"
@@ -13,7 +9,20 @@
 #include "freertos/event_groups.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
-    
+
+//wifi sockets etc requirements
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include <lwip/netdb.h>
+
+//wifi requirements
+#define EXAMPLE_WIFI_SSID "troutstream"
+#define EXAMPLE_WIFI_PASS "password"
+#define PORT 80
+#include "esp_wifi.h"
+#include "../components/wifisetup.h"
+
 //i2c and periferal requirements
 #include "driver/i2c.h"
 static uint32_t i2c_frequency = 100000;
@@ -23,90 +32,90 @@ static gpio_num_t i2c_gpio_scl = 19;
 #include "../components/i2c.h"
 #include "../components/ssd1306.h"
 
-#define len   1024
-uint8_t framebuffer[len];
+//tcp_server_task and globals dec
+//does server setup and waits for http_request
+//    index.html - returns webpag
+//    GetData GET - reads http post into rx_buffer
+//                  and returns outstring
+char outstr[4096];      
+char rx_buffer[1024];  
+#include "../components/tcp_server_task.h"
+    
+#define maxlen  32
+static void lipo_control_task () {
+   int rate_sec = 1;
+   int duration_time = 0;
 
-void display_text(char *disp_string){
-   int line = 0; int size = 1; char f0; char f1; char ft;
-   int framebuf_ptr = 0;
+   //from web page control interface
+   int lipo_charge = 0;
+   int lipo_discharge = 0;
+   int lipo_38 = 0;
+   float lipo_current = 0.00;
+   //outputs to webpage
+   float volt_meas1[maxlen] = { 0 };
+   float volt_meas2[maxlen] = { 0 };
+   float volt_meas3[maxlen] = { 0 };
+   float total_charge = 0;
+   float adc1 = 1;
+   float adc2 = 2;
+   float adc3 = 3;
+   float adc4 = 4;
+   float aout = 3.2;
+   int relay1 = 11;
+   int relay2 = 12;
+   int relay3 = 13;
+   int relay4 = 14;
 
-   for (int n=0; n< strlen( disp_string); n++) {
-      if(disp_string[n] == '|') { framebuf_ptr = 128 * ++line; }
-      else if(disp_string[n]=='1' && framebuf_ptr%128 == 0){size = 1;++framebuf_ptr;}
-      else if(disp_string[n]=='2' && framebuf_ptr%128 == 0){size = 2;++framebuf_ptr;}
-      else if(disp_string[n]=='4' && framebuf_ptr%128 == 0){size = 4;++framebuf_ptr;}
-      else if(size == 1){
-         for(int a=0; a < 5; a++){
-             framebuffer[framebuf_ptr++] = fonttable5x7[(a + 5*(disp_string[n]-' ' ))%1024]; } 
-         framebuf_ptr++; }
-      else if(size == 2 || size == 4){ //twice as wide
-          for(int a=0; a < 5; a++){
-             framebuffer[framebuf_ptr++] = fonttable5x7[(a + 5*(disp_string[n]-' ' ))%1024]; 
-             framebuffer[framebuf_ptr++] = fonttable5x7[(a + 5*(disp_string[n]-' ' ))%1024]; 
-             if(size == 4){ //twice as big
-                 f0 = 0; f1 = 0; 
-                 ft = fonttable5x7[a + 5*(disp_string[n]-' ')] ;
-                 if((ft >> 7) & 1) f0 = 0xc0; 
-                 if((ft >> 6) & 1) f0 = f0 + 0x30; 
-                 if((ft >> 5) & 1) f0 = f0 + 0x0c; 
-                 if((ft >> 4) & 1) f0 = f0 + 0x03; 
-                 if((ft >> 3) & 1) f1 = 0xc0; 
-                 if((ft >> 2) & 1) f1 = f1 + 0x30; 
-                 if((ft >> 1) & 1) f1 = f1 + 0x0c; 
-                 if((ft >> 0) & 1) f1 = f1 + 0x03; 
-                 framebuffer[framebuf_ptr - 1] = f1; 
-                 framebuffer[framebuf_ptr - 2] = f1; 
-                 framebuffer[128+ (framebuf_ptr - 1)] = f0; 
-                 framebuffer[128+ (framebuf_ptr - 2)] = f0; 
-             }
-          }
-       framebuf_ptr++; }
+   char tmp[64];
+   char *temp;
+   while (1) {
+       //read rx_data and parse commands
+       printf("rx_buffer==>%s\n", rx_buffer);
+       temp = strstr(rx_buffer, "charge=");  
+         if(temp)sscanf(temp,"charge=%d", &lipo_charge);
+       temp = strstr(rx_buffer, "dischg=");  
+         if(temp)sscanf(temp,"dischg=%d", &lipo_discharge);
+       temp = strstr(rx_buffer, "dischg38=");  
+         if(temp)sscanf(temp,"dischg38=%d", &lipo_38);
+       temp = strstr(rx_buffer, "current=");  
+         if(temp)sscanf(temp,"current=%f", &lipo_current);
+       printf ("interpeted  -  %d %d %d %f\n", lipo_charge, lipo_discharge, lipo_38, lipo_current);
+
+       //collect data and populate volt_meas, manage system
+       total_charge = total_charge + rate_sec * lipo_current / 3600;
+       duration_time = duration_time + rate_sec;
+       volt_meas1[1] = 1.11;
+       volt_meas2[2] = 2.22;
+       volt_meas3[3] = 3.33;
+
+       //construct outstring
+       snprintf( outstr, sizeof tmp,"%d,%d,%5.3f,", maxlen, duration_time, total_charge);
+       
+       snprintf( tmp, sizeof tmp,"%4.2f,%4.2f,%4.2f,%4.2f,", adc1, adc2, adc3, adc4); 
+       strcat (outstr, tmp);  
+       snprintf( tmp, sizeof tmp,"%d,%d,%d,%d,", relay1, relay2, relay3, relay4); strcat (outstr, tmp);  
+
+       for (int a = 0; a < maxlen; a++) {
+            snprintf( tmp, sizeof tmp,"%4.2f,%4.2f,%4.2f,", volt_meas1[a], volt_meas2[a], volt_meas3[a]); 
+            strcat (outstr, tmp);  
+       }
+       strcat ( outstr, "EOF\0");
+       printf("outstr   ==>%s\n", outstr);
+       vTaskDelay(200);
    }
 }
 
 void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
-    i2cdetect();
-    ssd1305_init();
+    initialise_wifi();
+    wait_for_ip();
+    //i2cdetect();
+    //ssd1305_init();
 
-    uint8_t regdata[128];
-    while(1){
-       //clear frame buffer and write text fields
-       for(int i=0; i<len; i++){ framebuffer[i]= (uint8_t)0x00; }
-       char *disp_string = "4  Waveform|||||||1   12ms full scale";
-       display_text(disp_string);
+    //start tcp server and data collection tasks
+    xTaskCreate(tcp_server_task, "tcp_server", 8192, NULL, 4, NULL);
+    xTaskCreate(lipo_control_task, "lipo_control_task", 4096, NULL, 5, NULL);
 
-       i2c_read(0x48, 0x00, regdata, 128);
-
-       uint64_t scratch;
-       for(int a=0; a<128;a++){
-           
-           regdata[a] = regdata[a] / 4;
-           char byte = 0x00;
-           if(regdata[a]%0x8 == 0x0)byte = 0x80;
-           if(regdata[a]%0x8 == 0x1)byte = 0x40;
-           if(regdata[a]%0x8 == 0x2)byte = 0x20;
-           if(regdata[a]%0x8 == 0x3)byte = 0x10;
-           if(regdata[a]%0x8 == 0x4)byte = 0x08;
-           if(regdata[a]%0x8 == 0x5)byte = 0x04;
-           if(regdata[a]%0x8 == 0x6)byte = 0x02;
-           if(regdata[a]%0x8 == 0x7)byte = 0x01;
-           framebuffer[(6-(regdata[a]/0x8)) * 128 + a] = byte;
-           //framebuffer[(6-(regdata[a]/0x8)) * 128 + a] = (regdata[a]+0)%0x8;
-           
-           
-           //framebuffer[6*128 + a] = scratch/(1<<32);
-           //framebuffer[5*128 + a] = (scratch%(1<<32))/(1<<24);
-           //framebuffer[4*128 + a] = (scratch%(1<<24))/(1<<16);
-           //framebuffer[3*128 + a] = (scratch%(1<<16))/(1<<8);
-           //framebuffer[2*128 + a] = scratch%(1<<8);
-       }
-
-       i2c_write_block( 0x3c, 0x40, framebuffer, len);
-//       free(framebuffer);
-
-       vTaskDelay(10);
-   }
 }
 

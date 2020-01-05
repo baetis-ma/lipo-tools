@@ -61,10 +61,10 @@ static void tcp_server_task(void *pvParameters)
             } else 
             //parse datagram, rcv data from webpage or return collected data
             if (strcmp("GET", http_type) ==0 || strcmp("getData",temp_str) ==0 ){
-                tcpsock_handle_data();
+                //tcpsock_handle_data();
  
-                ESP_LOGI("","sizeof=%d  %s",strlen(outstr), outstr);
-                send(sock, outstr, sizeof outstr, 0);
+                //ESP_LOGI("","sizeof=%d  %s",strlen(outstr), outstr);
+                //send(sock, outstr, sizeof outstr, 0);
                 
             //resource not found 
             } else {
