@@ -55,16 +55,14 @@ static void tcp_server_task(void *pvParameters)
                 int html_len =  strlen(index_html_start) - strlen(index_html_end);
                 for( int pkt_ptr = 0; pkt_ptr < html_len; pkt_ptr = pkt_ptr + pkt_buf_size){
                     if ((html_len - pkt_ptr) < pkt_buf_size) pkt_end = html_len - pkt_ptr;
-                        //ESP_LOGI("", "pkt_ptr %d pkt_end %d", pkt_ptr,pkt_end );
+                        ESP_LOGI("", "pkt_ptr %d pkt_end %d", pkt_ptr,pkt_end );
                         send(sock, index_html_start + pkt_ptr, pkt_end, 0);
                     }
             } else 
             //parse datagram, rcv data from webpage or return collected data
             if (strcmp("GET", http_type) ==0 || strcmp("getData",temp_str) ==0 ){
-                //tcpsock_handle_data();
- 
-                //ESP_LOGI("","sizeof=%d  %s",strlen(outstr), outstr);
-                //send(sock, outstr, sizeof outstr, 0);
+                ESP_LOGI("","sizeof=%d  %s",strlen(outstr), outstr);
+                send(sock, outstr, sizeof outstr, 0);
                 
             //resource not found 
             } else {

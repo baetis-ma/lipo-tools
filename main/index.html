@@ -2,16 +2,18 @@
 <html>
 <head>
 <style>
-    body {background-color: salmon;}
+    body {background-color: darkgoldenrod;}
     h1  { text-align:center; color:Black; }
     #myBat  { position:absolute;top:20%;left:7%;height:65%; width:82%; }
     #chargef { position:absolute;top:90%;left:10%; }
-    #dischgf { position:absolute;top:90%;left:25%; }
-    #dischg38f { position:absolute;top:90%;left:43%; }
+    #dischgf { position:absolute;top:90%;left:30%; }
+    #dischg38f { position:absolute;top:95%;left:10%; }
     #currentf { position:absolute;top:90%;left:65%; }
-    #volt1 { position:absolute;top:7%;left:5%; }
-    #volt2 { position:absolute;top:10%;left:5%; }
-    #volt3 { position:absolute;top:13%;left:5%; }
+    #subcurrentf { position:absolute;top:93%;left:75%; }
+    #volt1 { position:absolute;top:5%;left:5%; }
+    #volt2 { position:absolute;top:8%;left:5%; }
+    #volt3 { position:absolute;top:11%;left:5%; }
+    #volt4 { position:absolute;top:14%;left:5%; }
     #chrg1 { position:absolute;top:48%;left:90%; }
     #chrg2 { position:absolute;top:51%;left:90%; }
     #disc1 { position:absolute;top:58%;left:90%; }
@@ -20,8 +22,9 @@
     #relay2 { position:absolute;top:73%;left:90%; }
     #relay3 { position:absolute;top:76%;left:90%; }
     #relay4 { position:absolute;top:79%;left:90%; }
-    #powertot { position:absolute;top:10%;left:80%; }
+    #powertot { position:absolute;top:10%;left:70%; }
     input { font-size:xx-small;}
+
 </style>
   <!-- Plotly.js -->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -29,7 +32,8 @@
 
 <body>
     <h1>LiPo Battery Charger and Tester</h1>
-    <form id ="currentf">Battery Current <input id = "current" type="text" size="4" value="0.00"> Amps</form>
+    <form id ="currentf">Battery Current <input id = "current" type="text" size="4" value=""> Amps</form>
+    <form id ="subcurrentf"> <input id = "subcurrent" type="button" size="4" value="Submit"></form>
     <form id="chargef">Charging <input type="button" id='charge' value="DISABLED"></form>
     <form id="dischgf">Discharging <input type="button" id='dischg' value="DISABLED"></form>
     <form id="dischg38f">Discharge to 3.8V/cell <input type="button" id='dischg38' value="DISABLED"></form>
@@ -37,6 +41,7 @@
     <p id = "volt1">
     <p id = "volt2">
     <p id = "volt3">
+    <p id = "volt4">
     <p id = "powertot">
     <p id = "chrg1">
     <p id = "chrg2">
@@ -48,163 +53,117 @@
     <p id = "relay4">
 
     <script>
-      setInterval(function(){ getData(); } , 2000);
+      setInterval(function(){ getData(); } , 1000);
+      //process webpage events
+      document.getElementById('dischg').onclick = function() { strobe = 1;
+          if(document.getElementById("dischg").value === "DISABLED") {
+                 charge = 0; dischg = 1; dischg38 = 0; } else dischg = 0; }
+      document.getElementById('charge').onclick = function() { strobe = 1;
+          if(document.getElementById("charge").value === "DISABLED") {
+                 charge = 1; dischg = 0; dischg38 = 0; } else  charge = 0; }
+      document.getElementById('dischg38').onclick = function() { strobe = 1;
+          if(document.getElementById("dischg38").value === "DISABLED") {
+                 charge = 0; dischg = 0; dischg38 = 1; } else dischg38 = 0; }
+      document.getElementById('subcurrent').onclick = function() { 
+          current = document.getElementById("current").value; }
 
-      document.getElementById('dischg').onclick = function() {
-          if(document.getElementById("dischg").value === "DISABLED"){
-             document.getElementById("dischg").value = "ENABLED";  
-             databatv1 = []; databatv2 = []; databatv3 = [];
-             trace1.x = []; trace2.x = []; trace3.x = [];
-             trace1.y = []; trace2.y = []; trace3.y = [];
-             samplecnt = 0;
-             document.getElementById("dischg38").value = "DISABLED"; 
-             document.getElementById("charge").value = "DISABLED"; }
-          else { 
-             document.getElementById("dischg").value = "DISABLED"; }
-      }
 
-      document.getElementById('charge').onclick = function() {
-          if(document.getElementById("charge").value === "DISABLED"){
-             document.getElementById("charge").value = "ENABLED";  
-             databatv1 = []; databatv2 = []; databatv3 = [];
-             trace1.x = []; trace2.x = []; trace3.x = [];
-             trace1.y = []; trace2.y = []; trace3.y = [];
-             samplecnt = 0;
-             document.getElementById("dischg38").value = "DISABLED"; 
-             document.getElementById("dischg").value = "DISABLED"; }
-          else { 
-             document.getElementById("charge").value = "DISABLED"; }
-      }
-
-      document.getElementById('dischg38').onclick = function() {
-          if(document.getElementById("dischg38").value === "DISABLED"){
-             document.getElementById("dischg38").value = "ENABLED";  
-             databatv1 = []; databatv2 = []; databatv3 = [];
-             trace1.x = []; trace2.x = []; trace3.x = [];
-             trace1.y = []; trace2.y = []; trace3.y = [];
-             samplecnt = 0;
-             document.getElementById("dischg").value = "DISABLED"; 
-             document.getElementById("charge").value = "DISABLED"; }
-          else { 
-             document.getElementById("dischg38").value = "DISABLED"; }
-      }
 
       function getData() {
-         //update plot
-	     databatv1[samplecnt] = 4.2;
-	     databatv2[samplecnt] = 4.1;
-	     databatv3[samplecnt] = 4.0;
-         //put the plotting data into plotly trace arrays
-         trace1.x[samplecnt] = String(samplecnt);
-         trace2.x[samplecnt] = String(samplecnt);
-         trace3.x[samplecnt] = String(samplecnt);
-         trace1.y[samplecnt] = String(databatv1[samplecnt]);
-         trace2.y[samplecnt] = String(databatv2[samplecnt]);
-         trace3.y[samplecnt] = String(databatv3[samplecnt]);
-         Plotly.newPlot('myBat', databatv, layout,{responsive: true});
-
-         //write to rest of webpage
-         document.getElementById("volt1").innerHTML = "battery 1 = "+databatv1[samplecnt].toFixed(2)+"V";
-         document.getElementById("volt2").innerHTML = "battery 2 = "+databatv2[samplecnt].toFixed(2)+"V";
-         document.getElementById("volt3").innerHTML = "battery 3 = "+databatv3[samplecnt].toFixed(2)+"V";
-	     samplecnt = samplecnt + 1;
-         document.getElementById("powertot").innerHTML = "Battery Charge = "+powertot.toFixed(3)+" AH";
-         document.getElementById("chrg1").innerHTML = "Charging";
-         if (document.getElementById('charge').value == "ENABLED")
-                document.getElementById("chrg2").innerHTML = " At "+current.toString(10)+" Amps";
-                   else
-                document.getElementById("chrg2").innerHTML = " OFF";
-         document.getElementById("disc1").innerHTML = "Discharge";
-         if (document.getElementById('dischg').value == "ENABLED")
-                document.getElementById("disc2").innerHTML = " 3 Ohm to GND"; else
-                document.getElementById("disc2").innerHTML = " OFF";
-         document.getElementById("relay1").innerHTML = "Relay1 OFF";
-         document.getElementById("relay2").innerHTML = "Relay2 OFF";
-         document.getElementById("relay3").innerHTML = "Relay3 OFF";
-         document.getElementById("relay4").innerHTML = "Relay4 OFF";
-
-         //post http responce
-         current = document.getElementById("current").value;
-         if ( document.getElementById("charge").value == "ENABLED") charge = 1;
-                                                               else charge = 0;
-         if ( document.getElementById("dischg").value == "ENABLED") dischg = 1;
-                                                               else dischg = 0;
-         if ( document.getElementById("dischg38").value == "ENABLED") dischg38 = 1;
-                                                               else dischg38 = 0;
-
+         console.log("getData entered ");
+         //make http request to server on esp
+         //    send tempstr posted in url
+         if(strobe == 1)current = document.getElementById("current").value;
          var tempstr = "charge="+charge+",dischg="+dischg+",dischg38="+dischg38+
-                       ",current="+document.getElementById("current").value;
+                      ",current="+current+",strobe="+strobe;
+         strobe = 0;
+
          var xhr = new XMLHttpRequest();
          xhr.open("GET", "getData?"+tempstr, true);
          xhr.setRequestHeader("Content-Type", "application/bin");
          xhr.send(tempstr);
-
-         powertot = powertot + current / 3600;
-
-         //when responce occurs parst then new data from esp
          xhr.onreadystatechange = function() {
-//          if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-//             var DataRet = this.responseText;
-//             var DataRetArray = DataRet.split(",");
-//             var lasttraceptr;
-//             console.log("Start "+DataRetArray[0]);
-//             //console.log("DataRet "+DataRetArray);
-//             lasttraceptr = traceptr;
-//             var indexx;
-//
-//             var cntsamples= DataRetArray[0];
-//             if(cntsamples >=1){
-//             for(x=0;x<cntsamples-1;x++) {
-//                 tdata[traceptr]    = parseInt(DataRetArray[7*x+1],10);
-//                 data[traceptr] = parseInt(DataRetArray[7*x+2],10);
-//                 data[traceptr] = parseInt(DataRetArray[7*x+3],10);
-//                 data[traceptr] = parseInt(DataRetArray[7*x+4],10);
-//                 traceptr++;
-//             }}
-//
-//             //keep the plotting data sample at samples length
-//             var maxsamples = 400;
-//             if (tdata.length > maxsamples) {
-//                 tdata.splice( 0, tdata.length-maxsamples);
-//                 data.splice( 0, aclxdata.length-maxsamples);
-//                 data.splice( 0, aclydata.length-maxsamples);
-//                 data.splice( 0, aclzdata.length-maxsamples);
-//                 traceptr = maxsamples ;
-//             }
-//
-//             //put the plotting data into plotly trace arrays
-//             for(x=0; x<tdata.length; x++){
-//                 trace1.x[x] = String(tdata[x]);
-//                 trace2.x[x] = String(tdata[x]);
-//                 trace3.x[x] = String(tdata[x]);
-//                 trace1.y[x] = String(databatv1[x]);
-//                 trace2.y[x] = String(databatv1[x]);
-//                 trace3.y[x] = String(databatv1[x]);
-//             }
-//
-//             //interface to html exery plot update
-//             Plotly.newPlot('myBat', databatv, layout,{responsive: true});
-//          }
-       }
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+               var DataRet = this.responseText;
+               var DataRetArray = DataRet.split(",");
+
+               maxlen = DataRetArray[0];
+               len = DataRetArray[1];
+               duration_time = DataRetArray[2];
+               powertot = DataRetArray[3];
+               current = DataRetArray[4];
+               charge = DataRetArray[5];
+               dischg = DataRetArray[6];
+               dischg38 = DataRetArray[7];
+               adc1 = DataRetArray[8];
+               adc2 = DataRetArray[9];
+               adc3 = DataRetArray[10];
+               adc4 = DataRetArray[11];
+               relay1 = DataRetArray[12];
+               relay2 = DataRetArray[13];
+               relay3 = DataRetArray[14];
+               relay4 = DataRetArray[15];
+             
+               for(var x = 0; x < len; x++){
+                   trace1.x[x] = String(x * duration_time / (3600 * len));
+                   trace2.x[x] = String(x * duration_time / (3600 * len));
+                   trace3.x[x] = String(x * duration_time / (3600 * len));
+                   trace1.y[x] = String(DataRetArray[16 + 3 * x]);
+                   trace2.y[x] = String(DataRetArray[16 + 3 * x + 1]);
+                   trace3.y[x] = String(DataRetArray[16 + 3 * x + 2]);
+               }
+               for ( var x = len; x < maxlen; x++){
+                   trace1.x[x] = ""; trace2.x[x] = ""; trace3.x[x] = "";
+                   trace1.y[x] = ""; trace2.y[x] = ""; trace3.y[x] = "";
+               }
+               Plotly.newPlot('myBat', databatv, layout,{responsive: true});
+
+               // read state from webpage or recover on startup, and update state reporting
+               if (charge == 1) document.getElementById("charge").value = "ENABLED";
+               if (charge == 0) document.getElementById("charge").value = "DISABLED";
+               if (dischg == 1) document.getElementById("dischg").value = "ENABLED";
+               if (dischg == 0) document.getElementById("dischg").value = "DISABLED";
+               if (dischg38 == 1) document.getElementById("dischg38").value = "ENABLED";
+               if (dischg38 == 0) document.getElementById("dischg38").value = "DISABLED";
+               if (samplecnt == 0) document.getElementById("current").value = current;
+
+               //markup rest of webpage
+               document.getElementById("volt1").innerHTML = "adc1="+adc1+"V";
+               document.getElementById("volt2").innerHTML = "adc2="+adc2+"V";
+               document.getElementById("volt3").innerHTML = "adc3="+adc3+"V";
+               document.getElementById("volt4").innerHTML = "adc4="+adc4+"V";
+               document.getElementById("powertot").innerHTML = "Battery Charge = "+powertot+" AH";
+               document.getElementById("chrg1").innerHTML = "Charging";
+               if (document.getElementById('charge').value == "ENABLED")
+                      document.getElementById("chrg2").innerHTML = " At "+current.toString(10)+" Amps"; else
+                      document.getElementById("chrg2").innerHTML = " OFF";
+               document.getElementById("disc1").innerHTML = "Discharge";
+               if (document.getElementById('dischg').value == "ENABLED")
+                      document.getElementById("disc2").innerHTML = " 3 Ohm to GND"; else
+                      document.getElementById("disc2").innerHTML = " OFF";
+               document.getElementById("relay1").innerHTML = "Relay1 "+relay1;
+               document.getElementById("relay2").innerHTML = "Relay2 "+relay2;
+               document.getElementById("relay3").innerHTML = "Relay3 "+relay3;
+               document.getElementById("relay4").innerHTML = "Relay4 "+relay4;
+  
+               samplecnt = samplecnt + 1;
+             }
+         }
       }
 
-      var x;
+      var maxlen = 128;
+      var len = 128;
+      var duration_time = 10;
       var samplecnt = 0;
       var powertot = 0;
-      var current;
-      var charge;
-      var dischg;
-      var dischg38;
-      var tdata = [0];
-      var databatv1 = [0];
-      var databatv2 = [0];
-      var databatv3 = [0];
-      var relay1 = 1; 
-      var relay2 = 1; 
-      var relay3 = 1; 
-      var relay4 = 1; //charging on
-      var traceptr = 0;
-      var regsubmit = 0;
+      var mode = 0;
+      var strobe = 0;
+      var current = 0;
+      var charge = 0;
+      var dischg = 0;
+      var dischg38 = 0;
+      var relay1, relay2, relay3, relay4;
+      var adc1, adc2, adc3, adc4;
       var DataRet;
       var trace1 = { x: [0], y: [0], mode: "lines+markers", 
                  line: {color:'rgb(255,0,0)', size: 2 },
@@ -217,24 +176,22 @@
                  marker: {color:'rgb(0,255,0)', size: 3 } };
 
       layout= {
-            title: { text:'Battery Cell Voltages', font: { size: 24, color: '#ffffff' } },
+            title: { text:"Battery Cell Voltages", font: { size: 24, color: "#ffffff" } },
             showlegend : false,
             autosize : true,
             margin:{ l:30, r:20, b:40, t:40, pad:4},
             plot_bgcolor:"#aaaf",
             paper_bgcolor:"#a00f",
-            yaxis: { range: [0, 5] },
-            xaxis: { title: { text: 'Time (sec)', font: { size: 18, color: '#ffffff' } },
+            yaxis: { title: { text: "Cell Voltage", font: { size: 18, color: "#ffffff" } },
+                     tickfont: { size:16, color:'white'}, 
+                     range: [0, 5] 
+            },
+            xaxis: { title: { text: "Time (hours)", font: { size: 18, color: "#ffffff" } },
                      tickfont: { size:16, color:'white'} 
             }
       }
 
       var databatv = [trace1,trace2,trace3];
-
     </script>
 </body>
 </html>
-
-
-
-
