@@ -23,8 +23,8 @@
     #relay3 { position:absolute;top:76%;left:90%; }
     #relay4 { position:absolute;top:79%;left:90%; }
     #powertot { position:absolute;top:10%;left:70%; }
+    #state {  background-color = salmon; }
     input { font-size:xx-small;}
-
 </style>
   <!-- Plotly.js -->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -53,7 +53,7 @@
     <p id = "relay4">
 
     <script>
-      setInterval(function(){ getData(); } , 1000);
+      setInterval(function(){ getData(); } , 2000);
       //process webpage events
       document.getElementById('dischg').onclick = function() { strobe = 1;
           if(document.getElementById("dischg").value === "DISABLED") {
@@ -66,9 +66,6 @@
                  charge = 0; dischg = 0; dischg38 = 1; } else dischg38 = 0; }
       document.getElementById('subcurrent').onclick = function() { 
           current = document.getElementById("current").value; }
-
-
-
       function getData() {
          console.log("getData entered ");
          //make http request to server on esp
@@ -77,7 +74,6 @@
          var tempstr = "charge="+charge+",dischg="+dischg+",dischg38="+dischg38+
                       ",current="+current+",strobe="+strobe;
          strobe = 0;
-
          var xhr = new XMLHttpRequest();
          xhr.open("GET", "getData?"+tempstr, true);
          xhr.setRequestHeader("Content-Type", "application/bin");
@@ -86,7 +82,6 @@
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                var DataRet = this.responseText;
                var DataRetArray = DataRet.split(",");
-
                maxlen = DataRetArray[0];
                len = DataRetArray[1];
                duration_time = DataRetArray[2];
@@ -95,10 +90,10 @@
                charge = DataRetArray[5];
                dischg = DataRetArray[6];
                dischg38 = DataRetArray[7];
-               adc1 = DataRetArray[8];
-               adc2 = DataRetArray[9];
-               adc3 = DataRetArray[10];
-               adc4 = DataRetArray[11];
+               if(DataRetArray[8] < 15)adc1 = DataRetArray[8];
+               if(DataRetArray[9] < 15)adc2 = DataRetArray[9];
+               if(DataRetArray[10] < 10)adc3 = DataRetArray[10];
+               if(DataRetArray[11] <  5)adc4 = DataRetArray[11];
                relay1 = DataRetArray[12];
                relay2 = DataRetArray[13];
                relay3 = DataRetArray[14];
@@ -117,7 +112,6 @@
                    trace1.y[x] = ""; trace2.y[x] = ""; trace3.y[x] = "";
                }
                Plotly.newPlot('myBat', databatv, layout,{responsive: true});
-
                // read state from webpage or recover on startup, and update state reporting
                if (charge == 1) document.getElementById("charge").value = "ENABLED";
                if (charge == 0) document.getElementById("charge").value = "DISABLED";
@@ -126,7 +120,6 @@
                if (dischg38 == 1) document.getElementById("dischg38").value = "ENABLED";
                if (dischg38 == 0) document.getElementById("dischg38").value = "DISABLED";
                if (samplecnt == 0) document.getElementById("current").value = current;
-
                //markup rest of webpage
                document.getElementById("volt1").innerHTML = "adc1="+adc1+"V";
                document.getElementById("volt2").innerHTML = "adc2="+adc2+"V";
@@ -139,7 +132,7 @@
                       document.getElementById("chrg2").innerHTML = " OFF";
                document.getElementById("disc1").innerHTML = "Discharge";
                if (document.getElementById('dischg').value == "ENABLED")
-                      document.getElementById("disc2").innerHTML = " 3 Ohm to GND"; else
+                      document.getElementById("disc2").innerHTML = " 20 Ohm to GND"; else
                       document.getElementById("disc2").innerHTML = " OFF";
                document.getElementById("relay1").innerHTML = "Relay1 "+relay1;
                document.getElementById("relay2").innerHTML = "Relay2 "+relay2;
@@ -150,7 +143,6 @@
              }
          }
       }
-
       var maxlen = 128;
       var len = 128;
       var duration_time = 10;
@@ -174,14 +166,13 @@
       var trace3 = { x: [0], y: [0], mode: "lines+markers", 
                  line: {color:'rgb(0,255,0)', size: 2 },
                  marker: {color:'rgb(0,255,0)', size: 3 } };
-
       layout= {
             title: { text:"Battery Cell Voltages", font: { size: 24, color: "#ffffff" } },
             showlegend : false,
             autosize : true,
             margin:{ l:30, r:20, b:40, t:40, pad:4},
-            plot_bgcolor:"#aaaf",
-            paper_bgcolor:"#a00f",
+            plot_bgcolor:"#ca9f",
+            paper_bgcolor:"maroon",
             yaxis: { title: { text: "Cell Voltage", font: { size: 18, color: "#ffffff" } },
                      tickfont: { size:16, color:'white'}, 
                      range: [0, 5] 
@@ -190,8 +181,8 @@
                      tickfont: { size:16, color:'white'} 
             }
       }
-
       var databatv = [trace1,trace2,trace3];
     </script>
 </body>
 </html>
+

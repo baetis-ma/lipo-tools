@@ -22,7 +22,7 @@ static void tcp_server_task(void *pvParameters)
     while (1) {
         int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
         if (sock < 0) { ESP_LOGE("", "Unable to accept connection: errno %d", errno); break; }
-        ESP_LOGI("", "Socket accepted");
+        //ESP_LOGI("", "Socket accepted");
         int len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
         rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
         // Error occured during receiving
@@ -31,13 +31,13 @@ static void tcp_server_task(void *pvParameters)
             //prints client source ip and http request packet to esp monitor
             inet_ntoa_r(((struct sockaddr_in *)&sourceAddr)->sin_addr.s_addr, 
                           addr_str, sizeof(addr_str) - 1);
-            ESP_LOGI("---  ", "Received %d bytes from %s:", len, addr_str);
-            ESP_LOGI("", "HTTP REQUEST Packet\n%s", rx_buffer);
+            //ESP_LOGI("---  ", "Received %d bytes from %s:", len, addr_str);
+            //ESP_LOGI("", "HTTP REQUEST Packet\n%s", rx_buffer);
             //parse request
             char http_type[8];
             char temp_str[16];
             sscanf(rx_buffer, "%s/", http_type);
-            ESP_LOGI("", "request type %s  ", http_type);
+            //ESP_LOGI("", "request type %s  ", http_type);
             temp = strstr(rx_buffer, "?");    
             if(temp){
                memcpy(temp_str, rx_buffer+strlen(http_type)+2, 
@@ -55,13 +55,13 @@ static void tcp_server_task(void *pvParameters)
                 int html_len =  strlen(index_html_start) - strlen(index_html_end);
                 for( int pkt_ptr = 0; pkt_ptr < html_len; pkt_ptr = pkt_ptr + pkt_buf_size){
                     if ((html_len - pkt_ptr) < pkt_buf_size) pkt_end = html_len - pkt_ptr;
-                        ESP_LOGI("", "pkt_ptr %d pkt_end %d", pkt_ptr,pkt_end );
+                        //ESP_LOGI("", "pkt_ptr %d pkt_end %d", pkt_ptr,pkt_end );
                         send(sock, index_html_start + pkt_ptr, pkt_end, 0);
                     }
             } else 
             //parse datagram, rcv data from webpage or return collected data
             if (strcmp("GET", http_type) ==0 || strcmp("getData",temp_str) ==0 ){
-                ESP_LOGI("","sizeof=%d  %s",strlen(outstr), outstr);
+                //ESP_LOGI("","sizeof=%d  %s",strlen(outstr), outstr);
                 send(sock, outstr, sizeof outstr, 0);
                 
             //resource not found 
