@@ -8,8 +8,10 @@
     #chargef { position:absolute;top:90%;left:10%; }
     #dischgf { position:absolute;top:90%;left:30%; }
     #dischg38f { position:absolute;top:95%;left:10%; }
-    #currentf { position:absolute;top:90%;left:65%; }
-    #subcurrentf { position:absolute;top:93%;left:75%; }
+    #currentf { position:absolute;top:90%;left:55%; }
+    #loadrf { position:absolute;top:94%;left:55%; }
+    #subcurrent {}
+    #subloadr {}
     #volt1 { position:absolute;top:5%;left:5%; }
     #volt2 { position:absolute;top:8%;left:5%; }
     #volt3 { position:absolute;top:11%;left:5%; }
@@ -32,11 +34,13 @@
 
 <body>
     <h1>LiPo Battery Charger and Tester</h1>
-    <form id ="currentf">Battery Current <input id = "current" type="text" size="4" value=""> Amps</form>
-    <form id ="subcurrentf"> <input id = "subcurrent" type="button" size="4" value="Submit"></form>
     <form id="chargef">Charging <input type="button" id='charge' value="DISABLED"></form>
     <form id="dischgf">Discharging <input type="button" id='dischg' value="DISABLED"></form>
     <form id="dischg38f">Discharge to 3.8V/cell <input type="button" id='dischg38' value="DISABLED"></form>
+    <form id ="currentf">Battery Current <input id = "current" type="text" size="4" value=""> Amps
+           <form><input id="subcurrent" type="button" size="4" value="Submit"> </form></form>
+    <form id ="loadrf"  >Added Load R <input id = "loadr" type="text" size="4" value=""> Ohms
+           <form><input id="subloadr" type="button" size="4" value="Submit"> </form></form>
     <div id="myBat" > </div>
     <p id = "volt1">
     <p id = "volt2">
@@ -66,13 +70,16 @@
                  charge = 0; dischg = 0; dischg38 = 1; } else dischg38 = 0; }
       document.getElementById('subcurrent').onclick = function() { 
           current = document.getElementById("current").value; }
+      document.getElementById('subloadr').onclick = function() { 
+          loadr = document.getElementById("loadr").value; }
+
       function getData() {
          console.log("getData entered ");
          //make http request to server on esp
          //    send tempstr posted in url
-         if(strobe == 1)current = document.getElementById("current").value;
-         var tempstr = "charge="+charge+",dischg="+dischg+",dischg38="+dischg38+
-                      ",current="+current+",strobe="+strobe;
+         var tempstr = "samplecnt="+samplecnt+ 
+                      ",charge="+charge+",dischg="+dischg+",dischg38="+dischg38+
+                      ",current="+current+",loadr="+loadr+",strobe="+strobe;
          strobe = 0;
          var xhr = new XMLHttpRequest();
          xhr.open("GET", "getData?"+tempstr, true);
@@ -82,30 +89,31 @@
             if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
                var DataRet = this.responseText;
                var DataRetArray = DataRet.split(",");
-               maxlen = DataRetArray[0];
-               len = DataRetArray[1];
-               duration_time = DataRetArray[2];
-               powertot = DataRetArray[3];
-               current = DataRetArray[4];
-               charge = DataRetArray[5];
-               dischg = DataRetArray[6];
-               dischg38 = DataRetArray[7];
-               if(DataRetArray[8] < 15)adc1 = DataRetArray[8];
-               if(DataRetArray[9] < 15)adc2 = DataRetArray[9];
-               if(DataRetArray[10] < 10)adc3 = DataRetArray[10];
-               if(DataRetArray[11] <  5)adc4 = DataRetArray[11];
-               relay1 = DataRetArray[12];
-               relay2 = DataRetArray[13];
-               relay3 = DataRetArray[14];
-               relay4 = DataRetArray[15];
+               maxlen = DataRetArray[1];
+               len = DataRetArray[2];
+               duration_time = DataRetArray[3];
+               powertot = DataRetArray[4];
+               if(samplecnt == 0)current = DataRetArray[5];
+               if(samplecnt == 0)loadr = DataRetArray[6];
+               charge = DataRetArray[7];
+               dischg = DataRetArray[8];
+               dischg38 = DataRetArray[9];
+               if(DataRetArray[10] < 15)adc1 = DataRetArray[10];
+               if(DataRetArray[11] < 15)adc2 = DataRetArray[11];
+               if(DataRetArray[12] < 10)adc3 = DataRetArray[12];
+               if(DataRetArray[13] <  5)adc4 = DataRetArray[13];
+               relay1 = DataRetArray[14];
+               relay2 = DataRetArray[15];
+               relay3 = DataRetArray[16];
+               relay4 = DataRetArray[17];
              
                for(var x = 0; x < len; x++){
                    trace1.x[x] = String(x * duration_time / (3600 * len));
                    trace2.x[x] = String(x * duration_time / (3600 * len));
                    trace3.x[x] = String(x * duration_time / (3600 * len));
-                   trace1.y[x] = String(DataRetArray[16 + 3 * x]);
-                   trace2.y[x] = String(DataRetArray[16 + 3 * x + 1]);
-                   trace3.y[x] = String(DataRetArray[16 + 3 * x + 2]);
+                   trace1.y[x] = String(DataRetArray[18 + 3 * x]);
+                   trace2.y[x] = String(DataRetArray[18 + 3 * x + 1]);
+                   trace3.y[x] = String(DataRetArray[18 + 3 * x + 2]);
                }
                for ( var x = len; x < maxlen; x++){
                    trace1.x[x] = ""; trace2.x[x] = ""; trace3.x[x] = "";
@@ -120,6 +128,7 @@
                if (dischg38 == 1) document.getElementById("dischg38").value = "ENABLED";
                if (dischg38 == 0) document.getElementById("dischg38").value = "DISABLED";
                if (samplecnt == 0) document.getElementById("current").value = current;
+               if (samplecnt == 0) document.getElementById("loadr").value = loadr;
                //markup rest of webpage
                document.getElementById("volt1").innerHTML = "adc1="+adc1+"V";
                document.getElementById("volt2").innerHTML = "adc2="+adc2+"V";
@@ -131,8 +140,9 @@
                       document.getElementById("chrg2").innerHTML = " At "+current.toString(10)+" Amps"; else
                       document.getElementById("chrg2").innerHTML = " OFF";
                document.getElementById("disc1").innerHTML = "Discharge";
+               if(loadr > 0) tempres = (20.0 * parseFloat(loadr)/(20.0+parseFloat(loadr))); else tempres = 20.0;
                if (document.getElementById('dischg').value == "ENABLED")
-                      document.getElementById("disc2").innerHTML = " 20 Ohm to GND"; else
+                      document.getElementById("disc2").innerHTML = " "+tempres.toFixed(2)+" Ohm to GND"; else
                       document.getElementById("disc2").innerHTML = " OFF";
                document.getElementById("relay1").innerHTML = "Relay1 "+relay1;
                document.getElementById("relay2").innerHTML = "Relay2 "+relay2;
@@ -151,6 +161,8 @@
       var mode = 0;
       var strobe = 0;
       var current = 0;
+      var loadr = 0;
+      var tempres;
       var charge = 0;
       var dischg = 0;
       var dischg38 = 0;
