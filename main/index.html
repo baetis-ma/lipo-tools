@@ -98,26 +98,38 @@
                charge = DataRetArray[7];
                dischg = DataRetArray[8];
                dischg38 = DataRetArray[9];
-               if(DataRetArray[10] < 15)adc1 = DataRetArray[10];
-               if(DataRetArray[11] < 15)adc2 = DataRetArray[11];
-               if(DataRetArray[12] < 10)adc3 = DataRetArray[12];
-               if(DataRetArray[13] <  5)adc4 = DataRetArray[13];
-               relay1 = DataRetArray[14];
-               relay2 = DataRetArray[15];
-               relay3 = DataRetArray[16];
-               relay4 = DataRetArray[17];
+               adc1 = DataRetArray[10];
+               adc2 = DataRetArray[11];
+               adc3 = DataRetArray[12];
+               adc4 = DataRetArray[13];
+               adc5 = DataRetArray[14];
+               adc6 = DataRetArray[15];
+               vrload = DataRetArray[16];
+               vdrain = DataRetArray[17];
              
                for(var x = 0; x < len; x++){
                    trace1.x[x] = String(x * duration_time / (3600 * len));
                    trace2.x[x] = String(x * duration_time / (3600 * len));
                    trace3.x[x] = String(x * duration_time / (3600 * len));
-                   trace1.y[x] = String(DataRetArray[18 + 3 * x]);
-                   trace2.y[x] = String(DataRetArray[18 + 3 * x + 1]);
-                   trace3.y[x] = String(DataRetArray[18 + 3 * x + 2]);
+                   trace4.x[x] = String(x * duration_time / (3600 * len));
+                   trace5.x[x] = String(x * duration_time / (3600 * len));
+                   trace6.x[x] = String(x * duration_time / (3600 * len));
+                   tracer.x[x] = String(x * duration_time / (3600 * len));
+                   traced.x[x] = String(x * duration_time / (3600 * len));
+                   trace1.y[x] = String(DataRetArray[18 + 8 * x]);
+                   trace2.y[x] = String(DataRetArray[18 + 8 * x + 1]);
+                   trace3.y[x] = String(DataRetArray[18 + 8 * x + 2]);
+                   trace4.y[x] = String(DataRetArray[18 + 8 * x + 3]);
+                   trace5.y[x] = String(DataRetArray[18 + 8 * x + 4]);
+                   trace6.y[x] = String(DataRetArray[18 + 8 * x + 5]);
+                   tracer.y[x] = String(DataRetArray[18 + 8 * x + 6]);
+                   traced.y[x] = String(DataRetArray[18 + 8 * x + 7]);
                }
-               for ( var x = len; x < maxlen; x++){
-                   trace1.x[x] = ""; trace2.x[x] = ""; trace3.x[x] = "";
-                   trace1.y[x] = ""; trace2.y[x] = ""; trace3.y[x] = "";
+               for ( var x = len-1; x < maxlen; x++){
+                   trace1.x[x] = ""; trace2.x[x] = ""; trace3.x[x] = ""; trace4.x[x] = "";
+                   trace5.x[x] = ""; trace6.x[x] = ""; tracer.x[x] = ""; traced.x[x] = "";
+                   trace1.y[x] = ""; trace2.y[x] = ""; trace3.y[x] = ""; trace4.y[x] = "";
+                   trace5.y[x] = ""; trace6.y[x] = ""; tracer.y[x] = ""; traced.y[x] = "";
                }
                Plotly.newPlot('myBat', databatv, layout,{responsive: true});
                // read state from webpage or recover on startup, and update state reporting
@@ -144,10 +156,10 @@
                if (document.getElementById('dischg').value == "ENABLED")
                       document.getElementById("disc2").innerHTML = " "+tempres.toFixed(2)+" Ohm to GND"; else
                       document.getElementById("disc2").innerHTML = " OFF";
-               document.getElementById("relay1").innerHTML = "Relay1 "+relay1;
-               document.getElementById("relay2").innerHTML = "Relay2 "+relay2;
-               document.getElementById("relay3").innerHTML = "Relay3 "+relay3;
-               document.getElementById("relay4").innerHTML = "Relay4 "+relay4;
+               //document.getElementById("relay1").innerHTML = "Relay1 "+relay1;
+               //document.getElementById("relay2").innerHTML = "Relay2 "+relay2;
+               //document.getElementById("relay3").innerHTML = "Relay3 "+relay3;
+               //document.getElementById("relay4").innerHTML = "Relay4 "+relay4;
   
                samplecnt = samplecnt + 1;
              }
@@ -166,8 +178,7 @@
       var charge = 0;
       var dischg = 0;
       var dischg38 = 0;
-      var relay1, relay2, relay3, relay4;
-      var adc1, adc2, adc3, adc4;
+      var adc1, adc2, adc3, adc4, adc5, adc6, vrload, vdrain;
       var DataRet;
       var trace1 = { x: [0], y: [0], mode: "lines+markers", 
                  line: {color:'rgb(255,0,0)', size: 2 },
@@ -178,6 +189,21 @@
       var trace3 = { x: [0], y: [0], mode: "lines+markers", 
                  line: {color:'rgb(0,255,0)', size: 2 },
                  marker: {color:'rgb(0,255,0)', size: 3 } };
+      var trace4 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(0,255,0)', size: 2 },
+                 marker: {color:'rgb(0,255,0)', size: 3 } };
+      var trace5 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(128,255,0)', size: 2 },
+                 marker: {color:'rgb(128,255,0)', size: 3 } };
+      var trace6 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(0,255,128)', size: 2 },
+                 marker: {color:'rgb(0,255,128)', size: 3 } };
+      var tracer = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(0,128,0)', size: 2 },
+                 marker: {color:'rgb(0,128,0)', size: 3 } };
+      var traced = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(128,128,0)', size: 2 },
+                 marker: {color:'rgb(128,128,0)', size: 3 } };
       layout= {
             title: { text:"Battery Cell Voltages", font: { size: 24, color: "#ffffff" } },
             showlegend : false,
@@ -193,7 +219,7 @@
                      tickfont: { size:16, color:'white'} 
             }
       }
-      var databatv = [trace1,trace2,trace3];
+      var databatv = [trace1,trace2,trace3,trace4,trace5,trace6,tracer,traced];
     </script>
 </body>
 </html>
